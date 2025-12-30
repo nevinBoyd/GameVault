@@ -1,8 +1,14 @@
 from flask import Flask
 from flask_migrate import Migrate
 from .models import db
+from .routes import (
+    auth_bp,
+    game_bp,
+    review_bp,
+    favorite_bp
+)
 
-migrate = None
+migrate = Migrate()
 
 def create_app():
     app = Flask(__name__)
@@ -15,6 +21,11 @@ def create_app():
 
     from . import models
 
-    migrate = Migrate(app, db)
+    migrate.init_app(app, db)
 
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(game_bp)
+    app.register_blueprint(review_bp)
+    app.register_blueprint(favorite_bp)
+    
     return app
