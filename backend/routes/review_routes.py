@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
-from backend.models import db, Review, Game, User
-from datetime import datetime
+from backend.models import db, Review, Game
+from backend.routes.auth_routes import get_logged_in_user
 
 review_bp = Blueprint("reviews", __name__, url_prefix="/games")
 
@@ -34,27 +34,23 @@ def get_reviews(game_id):
 @review_bp.post("/<int:game_id>/reviews")
 def add_review(game_id):
     game = Game.query.get(game_id)
-
     if not game:
         return jsonify({"error": "Game not found"}), 404
+
+    user = get_logged_in_user()
+    if not user:
+        return jsonify({"error": "Authentication required"}), 401
 
     data = request.get_json() or {}
     content = data.get("content")
     score = data.get("score")
 
-    # Basic validation
     if not content or score is None:
         return jsonify({"error": "content and score required"}), 400
 
     if not isinstance(score, int) or score < 1 or score > 10:
         return jsonify({"error": "score must be 1-10"}), 400
 
-    # Replace with real logged-in user later
-    user = User.query.first()
-    if not user:
-        return jsonify({"error": "No users exist to assign review"}), 400
-
-    # Prevent duplicate reviews per user per game
     existing = Review.query.filter_by(user_id=user.id, game_id=game_id).first()
     if existing:
         return jsonify({"error": "You already reviewed this game"}), 400
@@ -64,7 +60,6 @@ def add_review(game_id):
         score=score,
         user_id=user.id,
         game_id=game_id,
-        created_at=datetime.utcnow()
     )
 
     db.session.add(review)
@@ -89,11 +84,13 @@ def update_review(game_id, review_id):
     if not review or review.game_id != game_id:
         return jsonify({"error": "Review not found"}), 404
 
-    # TEMP USER — replace with real auth later
-    user = User.query.first()
-    if not user or review.user_id != user.id:
+    user = get_logged_in_user()
+    if not user:
+        return jsonify({"error": "Authentication required"}), 401
+    
+    if review.user_id != user.id:
         return jsonify({"error": "Not allowed"}), 403
-
+    
     data = request.get_json() or {}
     content = data.get("content")
     score = data.get("score")
@@ -126,11 +123,15 @@ def delete_review(game_id, review_id):
     review = Review.query.get(review_id)
     if not review or review.game_id != game_id:
         return jsonify({"error": "Review not found"}), 404
+    
+    user = get_logged_in_user()
+    if not user:
+        return jsonify({"error": "Authentication required"}), 401
 
-    # TEMP USER — replace later
-    user = User.query.first()
-    if not user or review.user_id != user.id:
+    # Ownership enforcement
+    if review.user_id != user.id:
         return jsonify({"error": "Not allowed"}), 403
+
 
     db.session.delete(review)
     db.session.commit()
