@@ -8,7 +8,8 @@ from .routes import (
     auth_bp,
     game_bp,
     review_bp,
-    favorite_bp
+    favorite_bp,
+    user_bp
 )
 
 migrate = Migrate()
@@ -30,5 +31,6 @@ def create_app():
     app.register_blueprint(game_bp)
     app.register_blueprint(review_bp)
     app.register_blueprint(favorite_bp)
-    
+    app.register_blueprint(user_bp)
+
     return app
