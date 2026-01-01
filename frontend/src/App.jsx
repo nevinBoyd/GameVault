@@ -2,6 +2,10 @@ import { useUser } from "./UserContext";
 import { useState } from "react";
 import LoginForm from "./components/LoginForm";
 import RegisterForm from "./components/RegisterForm";
+import { Routes, Route, Link } from "react-router-dom";
+import GamesList from "./pages/GamesList";
+import GameDetails from "./pages/GameDetails";
+import Favorites from "./pages/Favorites";
 import "./index.css";
 
 export default function App() {
@@ -26,7 +30,20 @@ export default function App() {
       {user ? (
         <>
           <h2>{user.username}, unlocked the vault!</h2>
-          <button onClick={handleLogout}>Logout</button>
+
+          {/* Simple Nav For Now */}
+          <nav style={{ display: "flex", gap: "1rem", marginBottom: "1rem" }}>
+            <Link to="/">Games</Link>
+            <Link to="/favorites">Favorites</Link>
+            <button onClick={handleLogout}>Logout</button>
+          </nav>
+
+          {/* Authenticated Routes */}
+          <Routes>
+            <Route path="/" element={<GamesList />} />
+            <Route path="/games/:id" element={<GameDetails />} />
+            <Route path="/favorites" element={<Favorites />} />
+          </Routes>
         </>
       ) : (
         <>
