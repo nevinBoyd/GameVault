@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from flask import Flask
+from flask_cors import CORS
 from flask_migrate import Migrate
 from .models import db
 from .routes import (
@@ -19,11 +20,20 @@ bcrypt = Bcrypt()
 def create_app():
     app = Flask(__name__)
 
+    CORS(
+        app,
+        supports_credentials=True,
+        origins=["http://localhost:5173"]
+    )
+
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///gamevault.db"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["JSON_SORT_KEYS"] = False
     app.config["SECRET_KEY"] = "dev-secret-do-not-use-production"
     app.config["SESSION_COOKIE_NAME"] = "gamevault_session"
+    app.config["SESSION_COOKIE_SAMESITE"] = "None"
+    app.config["SESSION_COOKIE_SECURE"] = True
+    app.config["SESSION_COOKIE_HTTPONLY"] = True
 
     db.init_app(app)
     bcrypt.init_app(app)
