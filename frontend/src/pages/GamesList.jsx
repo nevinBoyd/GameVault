@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { API_BASE } from "../api";
 
 export default function GamesList() {
   const [games, setGames] = useState([]);
@@ -7,7 +8,7 @@ export default function GamesList() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch("http://localhost:5000/games", {
+    fetch(`${API_BASE}/games`, {
       credentials: "include",
     })
       .then(res => {

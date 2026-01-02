@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { API_BASE } from "../api";
 
 export default function GameDetails() {
   const { id } = useParams();
@@ -27,7 +28,7 @@ export default function GameDetails() {
   useEffect(() => {
     setLoading(true);
 
-    fetch(`http://localhost:5000/games/${id}`, {
+    fetch(`${API_BASE}/games/${id}`, {
       credentials: "include",
     })
       .then(res => {
@@ -45,7 +46,7 @@ export default function GameDetails() {
 
   // Load Favorites Status
   useEffect(() => {
-    fetch("http://localhost:5000/users/me/favorites", {
+    fetch(`${API_BASE}/users/me/favorites`, {
       credentials: "include",
     })
       .then(res => res.json())
@@ -57,7 +58,7 @@ export default function GameDetails() {
   }, [id]);
 
   function addFavorite() {
-    fetch(`http://localhost:5000/games/${id}/favorite`, {
+    fetch(`${API_BASE}/games/${id}/favorite`, {
       method: "POST",
       credentials: "include",
     })
@@ -67,7 +68,7 @@ export default function GameDetails() {
   }
 
   function removeFavorite() {
-    fetch(`http://localhost:5000/games/${id}/favorite`, {
+    fetch(`${API_BASE}/games/${id}/favorite`, {
       method: "DELETE",
       credentials: "include",
     })
@@ -80,7 +81,7 @@ export default function GameDetails() {
   function loadReviews() {
     setReviewsLoading(true);
 
-    fetch(`http://localhost:5000/games/${id}/reviews`, {
+    fetch(`${API_BASE}/games/${id}/reviews`, {
       credentials: "include",
     })
       .then(res => {
@@ -103,7 +104,7 @@ export default function GameDetails() {
   function submitReview(e) {
     e.preventDefault();
 
-    fetch(`http://localhost:5000/games/${id}/reviews`, {
+    fetch(`${API_BASE}/games/${id}/reviews`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -131,7 +132,7 @@ export default function GameDetails() {
   }
 
   function saveEdit(reviewId) {
-    fetch(`http://localhost:5000/games/${id}/reviews/${reviewId}`, {
+    fetch(`${API_BASE}/games/${id}/reviews/${reviewId}`, {
       method: "PUT",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -155,7 +156,7 @@ export default function GameDetails() {
 
   // Delete Review
   function deleteReview(reviewId) {
-    fetch(`http://localhost:5000/games/${id}/reviews/${reviewId}`, {
+    fetch(`${API_BASE}/games/${id}/reviews/${reviewId}`, {
       method: "DELETE",
       credentials: "include",
     })

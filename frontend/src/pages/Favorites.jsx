@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { API_BASE } from "../api";
 
 export default function Favorites() {
   const [favorites, setFavorites] = useState([]);
@@ -9,7 +10,7 @@ export default function Favorites() {
   function fetchFavorites() {
     setLoading(true);
 
-    fetch("http://localhost:5000/users/me/favorites", {
+    fetch(`${API_BASE}/users/me/favorites`, {
       credentials: "include",
     })
       .then(res => {
@@ -29,7 +30,7 @@ export default function Favorites() {
   }, []);
 
   function removeFavorite(gameId) {
-    fetch(`http://localhost:5000/games/${gameId}/favorite`, {
+    fetch(`${API_BASE}/games/${gameId}/favorite`, {
       method: "DELETE",
       credentials: "include",
     })
