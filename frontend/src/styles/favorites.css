@@ -1,0 +1,14 @@
+.favorite-remove-btn {
+  margin-top: 8px;
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.3);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background .2s ease;
+}
+
+.favorite-remove-btn:hover {
+  background: rgba(182, 3, 3, 0.459);
+}

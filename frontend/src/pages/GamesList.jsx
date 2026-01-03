@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 import "../styles/games.css";
+import "../styles/layout.css";
+import "../styles/genres.css";
+import "../styles/favorites.css";
+import "../styles/reviews.css";
 import { API_BASE } from "../api";
 
 export default function GamesList() {
@@ -12,14 +16,16 @@ export default function GamesList() {
 
   const [expandedGame, setExpandedGame] = useState(null);
 
-  //Review Writer
+  // REVIEW WRITER
   const [showReviewOverlay, setShowReviewOverlay] = useState(false);
   const [reviewText, setReviewText] = useState("");
   const [rating, setRating] = useState("");
 
-  //See Reviews
+  // SEE REVIEWS
   const [showReviewsOverlay, setShowReviewsOverlay] = useState(false);
   const [reviews, setReviews] = useState([]);
+  const [reviewsError, setReviewsError] = useState("");
+  const [reviewFeedback, setReviewFeedback] = useState("");
 
   // LOAD GENRES
   useEffect(() => {
@@ -71,38 +77,86 @@ export default function GamesList() {
   }
 
   // SUBMIT REVIEW
-  function submitReview(e) {
-    e.preventDefault();
-    console.log("Review Submitted:", reviewText, rating);
+async function submitReview(e) {
+  e.preventDefault();
 
-    // Later → backend here
+  if (!expandedGame) return;
+
+  try {
+    const res = await fetch(
+      `${API_BASE}/games/${expandedGame.id}/reviews`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: reviewText,
+          score: Number(rating)
+        })
+      }
+    );
+
+    const data = await res.json().catch(() => ({}));
+
+    // DUPLICATE REVIEW
+    if (!res.ok) {
+      if (res.status === 400 || res.status === 409) {
+        closeReviewOverlay();
+        setReviewFeedback(
+          data.message || "You already reviewed this game — view it below."
+        );
+        openReviews(expandedGame.id);
+        return;
+      }
+
+      setReviewFeedback("Something went wrong posting your review.");
+      return;
+    }
+
+    // SUCCESS
     closeReviewOverlay();
+    setReviewFeedback("Review posted successfully!");
+    openReviews(expandedGame.id);
+
+  } catch {
+    setReviewFeedback("Network error — try again.");
   }
+}
 
   // OPEN "SEE REVIEWS"
-  function openReviews(gameId) {
-    setShowReviewOverlay(false);
-    setShowReviewsOverlay(true);
+async function openReviews(gameId) {
+  setShowReviewOverlay(false);
+  setShowReviewsOverlay(true);
 
-    // Placeholder reviews (API later)
-    setReviews([
-      {
-        user: "Player 1",
-        rating: 5,
-        text: "One of the best RPGs ever made."
-      },
-      {
-        user: "Another Player",
-        rating: 4,
-        text: "Amazing story, world-building, and atmosphere."
-      }
-    ]);
+  setReviewsError("");
+  setReviewFeedback("");   // reset banner unless submitReview sets it
+
+  try {
+    const res = await fetch(
+      `${API_BASE}/games/${gameId}/reviews`,
+      { credentials: "include" }
+    );
+
+    if (!res.ok) {
+      setReviewsError("Failed to load reviews");
+      setReviews([]);
+      return;
+    }
+
+    const data = await res.json();
+    setReviews(data);
+
+  } catch {
+    setReviewsError("Failed to load reviews");
+    setReviews([]);
   }
+}
 
   // CLOSE "SEE REVIEWS"
   function closeReviewsOverlay() {
-    setShowReviewsOverlay(false);
-  }
+  setShowReviewsOverlay(false);
+  setReviewFeedback("");
+}
 
   return (
     <div className="games-layout">
@@ -111,7 +165,6 @@ export default function GamesList() {
       <aside className="genre-panel">
         <div className="genre-panel-inner">
 
-          {/* ALL */}
           <div
             className={`genre-item ${!selectedGenre ? "active" : ""}`}
             onClick={() => setSelectedGenre("")}
@@ -120,7 +173,6 @@ export default function GamesList() {
             <span className="count">{allGames.length}</span>
           </div>
 
-          {/* GENRES */}
           {genres.map(g => (
             <div
               key={g}
@@ -128,7 +180,6 @@ export default function GamesList() {
               onClick={() => setSelectedGenre(g)}
             >
               <span>{g}</span>
-
               <span className="count">
                 {allGames.filter(x => x.genres?.includes(g)).length}
               </span>
@@ -138,9 +189,8 @@ export default function GamesList() {
         </div>
       </aside>
 
-      {/* RIGHT — GAME GRID */}
+      {/* RIGHT SIDE — GAME GRID */}
       <section className="games-scroll-area">
-
         {error && <h2 style={{ color: "red" }}>{error}</h2>}
 
         <div className="games-grid">
@@ -173,21 +223,12 @@ export default function GamesList() {
         </div>
       </section>
 
-      {/* EXPANDED FULL VIEW */}
+      {/* EXPANDED VIEW */}
       {expandedGame && (
-        <div
-          className="expanded-overlay"
-          onClick={() => setExpandedGame(null)}
-        >
-          <div
-            className="expanded-card"
-            onClick={e => e.stopPropagation()}
-          >
+        <div className="expanded-overlay" onClick={() => setExpandedGame(null)}>
+          <div className="expanded-card" onClick={e => e.stopPropagation()}>
 
-            <button
-              className="close-expanded"
-              onClick={() => setExpandedGame(null)}
-            >
+            <button className="close-expanded" onClick={() => setExpandedGame(null)}>
               ✕
             </button>
 
@@ -201,7 +242,6 @@ export default function GamesList() {
                 ⭐ {expandedGame.rating || "No rating"}
               </p>
 
-              {/* BUTTONS */}
               <div className="expanded-actions">
 
                 <button
@@ -227,12 +267,11 @@ export default function GamesList() {
 
               </div>
 
-              {/* DESCRIPTION */}
               <div className="expanded-description">
                 {expandedGame.description || "No description available."}
               </div>
 
-              {/* WRITE REVIEW OVERLAY */}
+              {/* WRITE REVIEW */}
               {showReviewOverlay && (
                 <div className="review-overlay" onClick={e => e.stopPropagation()}>
                   <div className="review-overlay-card">
@@ -256,17 +295,11 @@ export default function GamesList() {
                         onChange={e => setRating(e.target.value)}
                       />
 
-                      <button
-                        className="submit-review-btn"
-                        onClick={submitReview}
-                      >
+                      <button className="submit-review-btn" onClick={submitReview}>
                         Submit
                       </button>
 
-                      <button
-                        className="cancel-review-btn"
-                        onClick={closeReviewOverlay}
-                      >
+                      <button className="cancel-review-btn" onClick={closeReviewOverlay}>
                         Cancel
                       </button>
 
@@ -276,23 +309,36 @@ export default function GamesList() {
                 </div>
               )}
 
-              {/* SEE REVIEWS OVERLAY */}
+              {/* SEE REVIEWS */}
               {showReviewsOverlay && (
                 <div className="review-overlay" onClick={e => e.stopPropagation()}>
                   <div className="review-overlay-card">
 
                     <h3>Player Reviews</h3>
 
-                    {reviews.length === 0 && (
+                    {reviewsError && (
+                      <p style={{ color: "red" }}>{reviewsError}</p>
+                    )}
+
+                    {reviews.length === 0 && !reviewsError && (
                       <p style={{ opacity: .8 }}>No reviews yet.</p>
                     )}
 
+                    {reviewFeedback && (
+                      <div className="review-feedback-banner">
+                        {reviewFeedback}
+                      </div>
+                    )}
+                   
                     <div className="reviews-list">
-                      {reviews.map((r, i) => (
-                        <div key={i} className="single-review">
+                      {reviews.map(r => (
+                        <div key={r.id} className="single-review">
                           <strong>{r.user}</strong>
-                          <div>⭐ {r.rating}</div>
-                          <p>{r.text}</p>
+                          <div>⭐ {r.score}</div>
+                          <p>{r.content}</p>
+                          <small style={{ opacity: .7 }}>
+                            {new Date(r.created_at).toLocaleDateString()}
+                          </small>
                         </div>
                       ))}
                     </div>
