@@ -48,8 +48,8 @@ def add_review(game_id):
     if not content or score is None:
         return jsonify({"error": "content and score required"}), 400
 
-    if not isinstance(score, int) or score < 1 or score > 10:
-        return jsonify({"error": "score must be 1-10"}), 400
+    if not isinstance(score, int) or score < 1 or score > 5:
+        return jsonify({"error": "score must be 1-5"}), 400
 
     existing = Review.query.filter_by(user_id=user.id, game_id=game_id).first()
     if existing:
@@ -99,8 +99,8 @@ def update_review(game_id, review_id):
         review.content = content
 
     if score is not None:
-        if not isinstance(score, int) or score < 1 or score > 10:
-            return jsonify({"error": "score must be 1-10"}), 400
+        if not isinstance(score, int) or score < 1 or score > 5:
+            return jsonify({"error": "score must be 1-5"}), 400
         review.score = score
 
     db.session.commit()

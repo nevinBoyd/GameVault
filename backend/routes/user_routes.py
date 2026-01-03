@@ -7,6 +7,7 @@ user_bp = Blueprint("users", __name__, url_prefix="/users")
 @user_bp.get("/me/favorites")
 def get_my_favorites():
     user = get_logged_in_user()
+
     if not user:
         return jsonify({"error": "Authentication required"}), 401
 
@@ -26,4 +27,3 @@ def get_my_favorites():
         }
         for g in favorites
     ])
-
