@@ -6,10 +6,8 @@ from backend.models import db, Game
 RAWG_BASE_URL = "https://api.rawg.io/api"
 RAWG_API_KEY = os.getenv("RAWG_API_KEY")
 
-
 class RAWGServiceError(Exception):
     pass
-
 
 def _rawg_get(endpoint: str, params: dict) -> dict:
     """
@@ -33,14 +31,11 @@ def _rawg_get(endpoint: str, params: dict) -> dict:
 
     return resp.json()
 
-
 def get_games_page(page: int = 1, page_size: int = 40, **extra_params) -> dict:
     """
-    Simple wrapper kept for /games/seed/test and other simple use cases.
-
-    By default:
-      - page_size = 40
-      - accepts extra RAWG params (dates, ordering, tags, search, etc.)
+    BY DEFAULT:
+    - Fetches RAWG /games listing
+    - Supports ordering, search, tags, date filters
     """
     payload = {
         "page": page,
@@ -49,12 +44,17 @@ def get_games_page(page: int = 1, page_size: int = 40, **extra_params) -> dict:
     }
     return _rawg_get("/games", payload)
 
+def get_game_details(game_id: int) -> dict:
+    """
+    Fetch full RAWG data for a single game.
+    Required because /games listing often lacks full description/platforms.
+    """
+    return _rawg_get(f"/games/{game_id}", {})
 
 def _extract_game_fields(rawg_game: dict) -> dict:
     """
     Normalize RAWG game JSON into our Game model fields.
     """
-    # defensive get() calls; RAWG fields can be missing
     game_id = rawg_game.get("id")
     if game_id is None:
         raise RAWGServiceError("RAWG game missing 'id' field")
@@ -62,7 +62,6 @@ def _extract_game_fields(rawg_game: dict) -> dict:
     name = rawg_game.get("name")
     slug = rawg_game.get("slug")
 
-    # description_raw only present on detail endpoints, sometimes on list responses
     description = (
         rawg_game.get("description_raw")
         or rawg_game.get("description")
@@ -99,10 +98,10 @@ def _extract_game_fields(rawg_game: dict) -> dict:
 def _insert_or_skip_game(rawg_game: dict, seen_ids: set) -> tuple[int, int, int]:
     """
     Insert a game into DB if not already present.
-    Keeps track of:
-      - total_seen
-      - inserted
-      - skipped_existing
+    Tracks:
+      total_seen
+      inserted
+      skipped_existing
     """
     total_seen = 0
     inserted = 0
@@ -111,12 +110,10 @@ def _insert_or_skip_game(rawg_game: dict, seen_ids: set) -> tuple[int, int, int]
     try:
         fields = _extract_game_fields(rawg_game)
     except RAWGServiceError:
-        # Bad / incomplete record – just skip
         return (0, 0, 0)
 
     game_id = fields["id"]
 
-    # count each unique RAWG entry attempt to process
     if game_id in seen_ids:
         total_seen += 1
         skipped_existing += 1
@@ -125,7 +122,6 @@ def _insert_or_skip_game(rawg_game: dict, seen_ids: set) -> tuple[int, int, int]
     seen_ids.add(game_id)
     total_seen += 1
 
-    # If already in the DB, skip
     existing = Game.query.get(game_id)
     if existing:
         skipped_existing += 1
@@ -148,63 +144,38 @@ def _insert_or_skip_game(rawg_game: dict, seen_ids: set) -> tuple[int, int, int]
 
     return (total_seen, inserted, skipped_existing)
 
-
 def seed_games() -> dict:
     """
     Expanded seeding system.
-
-    - Keeps existing games in DB
-    - Adds curated pages:
-        * 2024 high-rated (2 pages)
-        * 2025 high-rated (2 pages)
-        * All-time top-rated (2 pages)
-        * MMORPG-focused page
-    - Plus targeted search for:
-        * Diablo 4
-        * Path of Exile
-        * Path of Exile 2
-        * Arc Raiders
-    - Skips duplicates (both within this run and already in DB)
-
-    Returns a summary dict consumed by /games/seed route:
-      {
-        "total": <int>,            # total RAWG items processed
-        "inserted": <int>,         # actually inserted into DB
-        "skipped_existing": <int>
-      }
+    Adds curated pages + searched titles.
+    Preserves existing DB.
     """
-
     if not RAWG_API_KEY:
         raise RAWGServiceError("RAWG_API_KEY is missing")
 
-    # Track seen IDs just during this run (on top of DB existence check)
     seen_ids: set[int] = set()
 
     total_seen = 0
     inserted = 0
     skipped_existing = 0
 
-    # Curated page configs
-
-    # 2024 & 2025 high-rated games (rating-desc)
     curated_pages = [
-        # 2024
-        {"label": "top_2024_page_1", "params": {"dates": "2024-01-01,2024-12-31", "ordering": "-rating", "page": 1}},
-        {"label": "top_2024_page_2", "params": {"dates": "2024-01-01,2024-12-31", "ordering": "-rating", "page": 2}},
-        # 2025 (some RAWG data may be sparse / upcoming titles)
-        {"label": "top_2025_page_1", "params": {"dates": "2025-01-01,2025-12-31", "ordering": "-added", "page": 1}},
-        {"label": "top_2025_page_2", "params": {"dates": "2025-01-01,2025-12-31", "ordering": "-added", "page": 2}},
-        # All-time highly rated
-        {"label": "top_all_time_page_1", "params": {"ordering": "-rating", "page": 1}},
-        {"label": "top_all_time_page_2", "params": {"ordering": "-rating", "page": 2}},
-        # MMORPG
-        {"label": "mmorpg_page_1", "params": {"tags": "mmorpg", "ordering": "-rating", "page": 1}},
+        {"params": {"dates": "2024-01-01,2024-12-31", "ordering": "-rating", "page": 1}},
+        {"params": {"dates": "2024-01-01,2024-12-31", "ordering": "-rating", "page": 2}},
+        {"params": {"dates": "2025-01-01,2025-12-31", "ordering": "-added", "page": 1}},
+        {"params": {"dates": "2025-01-01,2025-12-31", "ordering": "-added", "page": 2}},
+        {"params": {"ordering": "-rating", "page": 1}},
+        {"params": {"ordering": "-rating", "page": 2}},
+        {"params": {"tags": "mmorpg", "ordering": "-rating", "page": 1}},
     ]
 
     for cfg in curated_pages:
-        data = get_games_page(page=cfg["params"].get("page", 1), page_size=40, **{
-            k: v for k, v in cfg["params"].items() if k != "page"
-        })
+        data = get_games_page(
+            page=cfg["params"].get("page", 1),
+            page_size=40,
+            **{k: v for k, v in cfg["params"].items() if k != "page"}
+        )
+
         results = data.get("results") or []
         for rawg_game in results:
             t, i, s = _insert_or_skip_game(rawg_game, seen_ids)
@@ -212,11 +183,9 @@ def seed_games() -> dict:
             inserted += i
             skipped_existing += s
 
-    #  Explicit target games by search term
-
     target_search_terms = [
         "Diablo 4",
-        "Diablo IV",           # backup spellings
+        "Diablo IV",
         "Path of Exile",
         "Path of Exile 2",
         "Arc Raiders",
@@ -228,18 +197,86 @@ def seed_games() -> dict:
         if not results:
             continue
 
-        # take the best match (first)
         rawg_game = results[0]
         t, i, s = _insert_or_skip_game(rawg_game, seen_ids)
         total_seen += t
         inserted += i
         skipped_existing += s
 
-    # Commit all changes once 
     db.session.commit()
 
     return {
         "total": total_seen,
         "inserted": inserted,
         "skipped_existing": skipped_existing,
+    }
+
+#   ENRICH EXISTING GAMES
+def enrich_existing_games() -> dict:
+    """
+    Goes through DB games and fills missing:
+      - description
+      - platforms
+      - genres
+
+    Only updates games missing data.
+    """
+    games = Game.query.all()
+
+    updated = 0
+    skipped = 0
+    failed = 0
+
+    for g in games:
+        needs_update = False
+
+        if not g.description or g.description.strip() == "":
+            needs_update = True
+        if not g.platforms:
+            needs_update = True
+        if not g.genres:
+            needs_update = True
+
+        if not needs_update:
+            skipped += 1
+            continue
+
+        try:
+            data = get_game_details(g.id)
+
+            g.description = (
+                data.get("description_raw")
+                or data.get("description")
+                or g.description
+                or ""
+            )
+
+            platforms = []
+            for p in (data.get("platforms") or []):
+                plat = p.get("platform") or {}
+                if plat.get("name"):
+                    platforms.append(plat["name"])
+            if platforms:
+                g.platforms = platforms
+
+            genres = []
+            for ge in (data.get("genres") or []):
+                if ge.get("name"):
+                    genres.append(ge["name"])
+            if genres:
+                g.genres = genres
+
+            updated += 1
+
+        except Exception:
+            failed += 1
+            continue
+
+    db.session.commit()
+
+    return {
+        "updated": updated,
+        "skipped": skipped,
+        "failed": failed,
+        "total": len(games),
     }
