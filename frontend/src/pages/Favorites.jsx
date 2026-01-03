@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { API_BASE } from "../api";
+import "../styles/games.css";
 
 export default function Favorites() {
   const [favorites, setFavorites] = useState([]);
@@ -39,7 +40,6 @@ export default function Favorites() {
         return res.json();
       })
       .then(() => {
-        // Refresh list after removal
         setFavorites(prev => prev.filter(g => g.id !== gameId));
       })
       .catch(err => alert(err.message));
@@ -49,35 +49,56 @@ export default function Favorites() {
   if (error) return <h2 style={{ color: "red" }}>{error}</h2>;
 
   return (
-    <div>
-      <h2>Your Favorites</h2>
+    <div className="games-scroll-area">
+
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h2>Your Favorites</h2>
+
+        {favorites.length > 0 && (
+          <span className="text-muted">
+            {favorites.length} saved
+          </span>
+        )}
+      </div>
 
       {favorites.length === 0 && (
-        <p>You have no favorite games yet.</p>
+        <p className="text-muted">
+          You have no favorite games yet.
+        </p>
       )}
 
-      <ul style={{ listStyle: "none", padding: 0 }}>
+      <div className="games-grid">
         {favorites.map(game => (
-          <li key={game.id} style={{ marginBottom: "1rem" }}>
+          <div key={game.id} className="game-card">
+
             <Link to={`/games/${game.id}`}>
-              <strong>{game.title}</strong>
+              <div
+                className="game-card-img"
+                style={{ backgroundImage: `url(${game.image_url})` }}
+              >
+                <div className="overlay">
+                  <strong className="title">{game.title}</strong>
+
+                  {game.rating && (
+                    <span className="rating">
+                      ⭐ {game.rating}
+                    </span>
+                  )}
+                </div>
+              </div>
             </Link>
 
-            {game.rating && (
-              <span style={{ marginLeft: "0.5rem" }}>
-                ⭐ {game.rating}
-              </span>
-            )}
-
+            {/* remove button */}
             <button
-              style={{ marginLeft: "1rem" }}
+              className="favorite-remove-btn"
               onClick={() => removeFavorite(game.id)}
             >
-              Remove Favorite
+              Remove
             </button>
-          </li>
+
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }

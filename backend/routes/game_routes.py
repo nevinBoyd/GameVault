@@ -71,7 +71,8 @@ def get_games():
             "image_url": g.image_url,
             "rating": g.rating,
             "genres": g.genres or [],
-            "platforms": g.platforms or []
+            "platforms": g.platforms or [],
+            "description": g.description
         }
         for g in games
     ])
