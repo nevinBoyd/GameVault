@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { API_BASE } from "../api";
 import "../styles/games.css";
+import "../styles/favorites.css";
 
 export default function Favorites() {
   const [favorites, setFavorites] = useState([]);
@@ -71,7 +72,10 @@ export default function Favorites() {
         {favorites.map(game => (
           <div key={game.id} className="game-card">
 
-            <Link to={`/games/${game.id}`}>
+            <Link
+              to={`/games/${game.id}`}
+              state={{ fromFavorites: true }}
+            >
               <div
                 className="game-card-img"
                 style={{ backgroundImage: `url(${game.image_url})` }}
