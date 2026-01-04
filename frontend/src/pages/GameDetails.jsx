@@ -1,36 +1,42 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useLocation } from "react-router-dom";
 import { API_BASE } from "../api";
+import "../styles/gameDetails.css";
 
 export default function GameDetails() {
   const { id } = useParams();
 
+  const location = useLocation();
+  const fromFavorites = location.state?.fromFavorites === true;
+
+  // Game
   const [game, setGame] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Favorites
   const [isFavorite, setIsFavorite] = useState(false);
   const [favLoading, setFavLoading] = useState(true);
 
+  // Reviews
   const [reviews, setReviews] = useState([]);
-  const [reviewsLoading, setReviewsLoading] = useState(true);
-
   const [reviewError, setReviewError] = useState(null);
+  const [myReview, setMyReview] = useState(null);
 
+  // Overlays
+  const [showAddOverlay, setShowAddOverlay] = useState(false);
   const [content, setContent] = useState("");
   const [score, setScore] = useState(5);
 
-  const [editing, setEditing] = useState(null);
+  const [editingReview, setEditingReview] = useState(null);
   const [editContent, setEditContent] = useState("");
   const [editScore, setEditScore] = useState(5);
 
-  // Load Game
+  /* LOAD GAME */
   useEffect(() => {
     setLoading(true);
 
-    fetch(`${API_BASE}/games/${id}`, {
-      credentials: "include",
-    })
+    fetch(`${API_BASE}/games/${id}`, { credentials: "include" })
       .then(res => {
         if (res.status === 404) throw new Error("Game not found");
         if (!res.ok) throw new Error("Failed to fetch game");
@@ -44,16 +50,11 @@ export default function GameDetails() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  // Load Favorites Status
+  /* FAVORITES */
   useEffect(() => {
-    fetch(`${API_BASE}/users/me/favorites`, {
-      credentials: "include",
-    })
+    fetch(`${API_BASE}/users/me/favorites`, { credentials: "include" })
       .then(res => res.json())
-      .then(list => {
-        const exists = list.some(g => g.id === Number(id));
-        setIsFavorite(exists);
-      })
+      .then(list => setIsFavorite(list.some(g => g.id === Number(id))))
       .finally(() => setFavLoading(false));
   }, [id]);
 
@@ -77,13 +78,9 @@ export default function GameDetails() {
       .catch(() => alert("Failed to remove favorite"));
   }
 
-  // Load Reviews
+  /* REVIEWS */
   function loadReviews() {
-    setReviewsLoading(true);
-
-    fetch(`${API_BASE}/games/${id}/reviews`, {
-      credentials: "include",
-    })
+    fetch(`${API_BASE}/games/${id}/reviews`, { credentials: "include" })
       .then(res => {
         if (!res.ok) throw new Error("Failed to load reviews");
         return res.json();
@@ -91,18 +88,21 @@ export default function GameDetails() {
       .then(data => {
         setReviews(data);
         setReviewError(null);
+
+        const mine = data.find(r => r.is_owner);
+        setMyReview(mine || null);
       })
-      .catch(err => setReviewError(err.message))
-      .finally(() => setReviewsLoading(false));
+      .catch(err => setReviewError(err.message));
   }
 
   useEffect(() => {
     loadReviews();
   }, [id]);
 
-  // Add Review
+  /* SUBMIT REVIEW */
   function submitReview(e) {
     e.preventDefault();
+    setReviewError(null)
 
     fetch(`${API_BASE}/games/${id}/reviews`, {
       method: "POST",
@@ -113,26 +113,43 @@ export default function GameDetails() {
       .then(res => res.json())
       .then(data => {
         if (data.error) {
-          alert(data.error);
+          setReviewError(data.error);
           return;
         }
 
         setContent("");
         setScore(5);
+        setShowAddOverlay(false);
         loadReviews();
       })
-      .catch(() => alert("Failed to submit review"));
+      .catch(() => alert("Error: Must Include Score 1-5 and Written Review."));
   }
 
-  // Edit Review
-  function startEdit(review) {
-    setEditing(review.id);
+  /* DELETE REVIEW FROM ADD / REMOVE */
+  function removeMyReview() {
+    if (!myReview) return;
+
+    fetch(`${API_BASE}/games/${id}/reviews/${myReview.id}`, {
+      method: "DELETE",
+      credentials: "include",
+    })
+      .then(res => res.json())
+      .then(() => {
+        setShowAddOverlay(false);
+        loadReviews();
+      })
+      .catch(() => alert("Failed to delete review"));
+  }
+
+  /* EDIT REVIEW */
+  function openEditOverlay(review) {
+    setEditingReview(review);
     setEditContent(review.content);
     setEditScore(review.score);
   }
 
-  function saveEdit(reviewId) {
-    fetch(`${API_BASE}/games/${id}/reviews/${reviewId}`, {
+  function saveEdit() {
+    fetch(`${API_BASE}/games/${id}/reviews/${editingReview.id}`, {
       method: "PUT",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -148,142 +165,237 @@ export default function GameDetails() {
           return;
         }
 
-        setEditing(null);
+        setEditingReview(null);
         loadReviews();
       })
       .catch(() => alert("Failed to update review"));
   }
 
-  // Delete Review
   function deleteReview(reviewId) {
     fetch(`${API_BASE}/games/${id}/reviews/${reviewId}`, {
       method: "DELETE",
       credentials: "include",
     })
       .then(res => res.json())
-      .then(() => loadReviews())
+      .then(() => {
+        setEditingReview(null);
+        loadReviews();
+      })
       .catch(() => alert("Failed to delete review"));
   }
 
-  // RENDER
+  /* UI */
   if (loading) return <h2>Loading game...</h2>;
   if (error) return <h2 style={{ color: "red" }}>{error}</h2>;
 
   return (
-    <div>
-      <Link to="/">⬅ Back to Games</Link>
+    <div className={`game-details-wrapper ${
+      fromFavorites
+        ? "favorite-details-page"
+        : "games-details-page"
+    }`}>
+
+      {/* TOP BAR */}
+      <div className="game-details-title-row">
+
+        <div className="nav-links">
+          <Link className="back-link" to="/">
+            Back to Games
+          </Link>
+
+          <span className="divider"> / </span>
+
+          <Link className="back-link" to="/favorites">
+            Back to Favorites
+          </Link>
+        </div>
+
+        {!favLoading && (
+          <>
+            {isFavorite ? (
+              <button
+                className="details-btn details-btn-danger fav-corner-btn"
+                onClick={removeFavorite}
+              >
+                Remove Favorite
+              </button>
+            ) : (
+              <button
+                className="details-btn fav-corner-btn"
+                onClick={addFavorite}
+              >
+                Add to Favorites
+              </button>
+            )}
+          </>
+        )}
+      </div>
 
       <h2>{game.title}</h2>
 
-      {!favLoading && (
-        <>
-          {isFavorite ? (
-            <button onClick={removeFavorite}>Remove Favorite</button>
-          ) : (
-            <button onClick={addFavorite}>Add to Favorites</button>
-          )}
-        </>
-      )}
+      <div className="game-details-header">
+        {game.image_url && (
+          <img
+            className="detail-main-image"
+            src={game.image_url}
+            alt={game.title}
+          />
+        )}
+      </div>
 
-      {game.image_url && (
-        <img
-          src={game.image_url}
-          alt={game.title}
-          style={{ width: "400px", borderRadius: "8px", marginBottom: "1rem" }}
-        />
-      )}
+      {/* REVIEW BUTTON RIGHT SIDE */}
+      <div className="review-action-right">
+        <button
+          className={`details-btn ${myReview ? "details-btn-danger" : ""} review-float-btn`}
+          onClick={() => {
+            loadReviews();
+            setShowAddOverlay(true);
+          }}
+        >
+          Add / Remove<br />Review
+        </button>
+      </div>
 
-      {game.rating && <h3>⭐ Rating: {game.rating}</h3>}
+      {/* META */}
+      <div className="game-details-meta">
+        {game.rating && <h3 className="rating-line">⭐ Rating: {game.rating}</h3>}
+        {game.released && (
+          <p className="meta-small">
+            <span className="detail-label">Released:</span> {game.released}
+          </p>
+        )}
+        {game.genres?.length > 0 && (
+          <p className="meta-small">
+            <span className="detail-label">Genres:</span> {game.genres.join(", ")}
+          </p>
+        )}
+        {game.platforms?.length > 0 && (
+          <p className="meta-small">
+            <span className="detail-label">Platforms:</span> {game.platforms.join(", ")}
+          </p>
+        )}
+      </div>
 
-      {game.released && <p><strong>Released:</strong> {game.released}</p>}
-
-      {game.genres?.length > 0 && (
-        <p><strong>Genres:</strong> {game.genres.join(", ")}</p>
-      )}
-
-      {game.platforms?.length > 0 && (
-        <p><strong>Platforms:</strong> {game.platforms.join(", ")}</p>
-      )}
-
+      {/* DESCRIPTION */}
       {game.description && (
-        <p style={{ marginTop: "1rem", maxWidth: "700px" }}>
-          {game.description}
-        </p>
+        <div className="game-description-box">
+          <p>{game.description}</p>
+        </div>
       )}
 
-      <hr />
+      <hr className="details-divider" />
 
-      <h3>Reviews</h3>
+      {/* REVIEWS */}
+      <div className="game-reviews-box">
+        {reviewError && <p style={{ color: "red" }}>{reviewError}</p>}
+        {reviews.length === 0 && <p>No reviews yet.</p>}
 
-      {reviewsLoading && <p>Loading reviews...</p>}
-      {reviewError && <p style={{ color: "red" }}>{reviewError}</p>}
-
-      {reviews.length === 0 && <p>No reviews yet.</p>}
-
-      <ul style={{ listStyle: "none", padding: 0 }}>
         {reviews.map(r => (
-          <li key={r.id} style={{ marginBottom: "1.5rem" }}>
-            <strong>{r.user}</strong> — Score: {r.score}
+          <div key={r.id} className="review-block">
+            <span className="review-user">{r.user}</span> — ⭐ {r.score}
+            <br />
+            <span className="review-date">
+              {new Date(r.created_at).toLocaleDateString()}
+            </span>
 
-            {editing === r.id ? (
-              <>
-                <div>
-                  <textarea
-                    value={editContent}
-                    onChange={e => setEditContent(e.target.value)}
-                  />
-                </div>
+            <p>{r.content}</p>
 
-                <div>
-                  <input
-                    type="number"
-                    min="1"
-                    max="10"
-                    value={editScore}
-                    onChange={e => setEditScore(e.target.value)}
-                  />
-                </div>
-
-                <button onClick={() => saveEdit(r.id)}>Save</button>
-                <button onClick={() => setEditing(null)}>Cancel</button>
-              </>
-            ) : (
-              <>
-                <p>{r.content}</p>
-                <button onClick={() => startEdit(r)}>Edit</button>
-                <button onClick={() => deleteReview(r.id)}>Delete</button>
-              </>
+            {r.is_owner && (
+              <button className="details-btn" onClick={() => openEditOverlay(r)}>
+                Edit
+              </button>
             )}
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
 
-      <hr />
+      {/* ADD REVIEW OVERLAY */}
+      {showAddOverlay && (
+        <div className="review-overlay">
+          <div className="review-overlay-card">
+            <h3>Write Review</h3>
 
-      <h3>Add Review</h3>
+            {reviewError && (
+              <p style={{ color: "salmon", fontWeight: "bold" }}>
+                {reviewError}
+              </p>
+            )}
 
-      <form onSubmit={submitReview}>
-        <textarea
-          required
-          value={content}
-          onChange={e => setContent(e.target.value)}
-        />
+            <textarea
+              value={content}
+              onChange={e => setContent(e.target.value)}
+            />
 
-        <br />
+            <input
+              type="number"
+              min="1"
+              max="5"
+              value={score}
+              onChange={e => setScore(e.target.value)}
+            />
 
-        <input
-          type="number"
-          min="1"
-          max="10"
-          required
-          value={score}
-          onChange={e => setScore(e.target.value)}
-        />
+            <div className="review-overlay-controls">
+              <button className="details-btn" onClick={submitReview}>
+                Submit
+              </button>
 
-        <br />
+              <button
+                className="details-btn details-btn-danger"
+                onClick={() => setShowAddOverlay(false)}
+              >
+                Cancel
+              </button>
 
-        <button type="submit">Submit Review</button>
-      </form>
+              {myReview && (
+                <button
+                  className="details-btn details-btn-danger"
+                  onClick={removeMyReview}
+                >
+                  Remove Review
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT REVIEW OVERLAY */}
+      {editingReview && (
+        <div className="review-overlay">
+          <div className="review-overlay-card">
+            <h3>Edit Review</h3>
+
+            <textarea value={editContent} onChange={e => setEditContent(e.target.value)} />
+
+            <input
+              type="number"
+              min="1"
+              max="5"
+              value={editScore}
+              onChange={e => setEditScore(e.target.value)}
+            />
+
+            <div className="review-overlay-controls">
+              <button className="details-btn" onClick={saveEdit}>Save</button>
+
+              <button
+                className="details-btn details-btn-danger"
+                onClick={() => setEditingReview(null)}
+              >
+                Cancel
+              </button>
+
+              <button
+                className="details-btn details-btn-danger"
+                onClick={() => deleteReview(editingReview.id)}
+              >
+                Remove Review
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
