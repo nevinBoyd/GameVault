@@ -56,7 +56,7 @@ export default function RegisterForm() {
           onChange={e => setPassword(e.target.value)}
         />
 
-        <button disabled={loading}>
+        <button type="submit" disabled={loading}>
           {loading ? "Registering..." : "Register"}
         </button>
       </form>

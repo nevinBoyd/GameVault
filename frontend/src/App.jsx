@@ -56,6 +56,7 @@ export default function App() {
         <div className="container">
           {user ? (
             <>
+            
               {/* Authenticated Nav */}
               <nav className="nav mb-4">
                 <Link to="/" className="nav-link px-0 me-3">
@@ -75,23 +76,14 @@ export default function App() {
             </>
           ) : (
             <>
-              {!showLogin && !showSignup && (
-                <div className="d-flex flex-column flex-sm-row gap-3 justify-content-center mt-5">
-                  <button
-                    type="button"
-                    className="btn btn-light"
-                    onClick={() => setShowLogin(true)}
-                  >
-                    Login
-                  </button>
 
-                  <button
-                    type="button"
-                    className="btn btn-outline-light"
-                    onClick={() => setShowSignup(true)}
-                  >
-                    Sign Up
-                  </button>
+              {/* LANDING LOGIN / SIGNUP BUTTONS */}
+              {!showLogin && !showSignup && (
+                <div className="auth-landing-container">
+                  <div className="auth-buttons">
+                    <button onClick={() => setShowLogin(true)}>Login</button>
+                    <button onClick={() => setShowSignup(true)}>Sign Up</button>
+                  </div>
                 </div>
               )}
 
