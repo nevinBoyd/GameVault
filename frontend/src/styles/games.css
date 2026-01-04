@@ -81,11 +81,18 @@
 }
 
 .expanded-image {
-  width: 100%;
+  width: 85%;
+  max-width: 720px;
+  height: 380px;
+
+  object-fit: cover;
   border-radius: 14px;
-  margin-bottom: 14px;
+  margin: 0 auto 14px auto;
+  display: block;
+
   box-shadow: 0 12px 30px rgba(0,0,0,.7);
 }
+
 
 .close-expanded {
   background: rgba(0,0,0,.6);

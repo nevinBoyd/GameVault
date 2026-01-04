@@ -1,0 +1,176 @@
+.game-details-wrapper {
+  max-width: 900px;
+  margin: 40px auto 120px auto;
+  padding: 25px 30px;
+  background: rgba(0,0,0,.85);
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 16px;
+  box-shadow: 0 0 40px rgba(0,0,0,.8);
+  position: relative;
+}
+
+/* HEADER + IMAGE */
+.game-details-header {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.game-details-header img {
+  width: 100%;
+  max-width: 720px;
+  height: 320px;
+  object-fit: cover;
+  border-radius: 14px;
+  margin-top: 10px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.7);
+}
+
+.game-details-meta {
+  margin-top: 10px;
+  color: #ddd;
+}
+
+/* Rating spacing + shrink */
+.rating-line {
+  margin-bottom: 10px;
+}
+
+.game-details-meta h3 {
+  transform: scale(.75);
+  transform-origin: left;
+}
+
+.meta-small {
+  font-size: .9rem;
+}
+
+.detail-label {
+  color: #9fc5ff;
+  font-weight: bold;
+}
+
+.details-divider {
+  margin: 20px 0;
+  border-color: rgba(255,255,255,.2);
+}
+
+/* BUTTONS */
+.details-btn {
+  padding: 7px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.3);
+  background: rgba(255,255,255,.1);
+  color: white;
+  cursor: pointer;
+  transition: .2s ease;
+  margin-right: 6px;
+}
+
+.details-btn:hover {
+  background: rgba(0,120,255,.6);
+}
+
+.details-btn-danger {
+  border-color: rgba(255,0,0,.6);
+  background: rgba(255,0,0,.25);
+}
+
+.details-btn-danger:hover {
+  background: rgba(255,0,0,.65);
+}
+
+/* TOP */
+.game-details-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* DESCRIPTION */
+.game-description-box {
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 6px;
+  margin-top: 10px;
+}
+.game-description-box::-webkit-scrollbar { display: none; }
+.game-description-box { scrollbar-width: none; }
+
+/* REVIEWS SCROLL */
+.game-reviews-box {
+  max-height: 230px;
+  overflow-y: auto;
+  padding-right: 6px;
+  margin-top: 10px;
+}
+.game-reviews-box::-webkit-scrollbar { display: none; }
+.game-reviews-box { scrollbar-width: none; }
+
+/* REVIEW CARDS */
+.review-block {
+  background: rgba(255,255,255,.08);
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.2);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+
+.review-user {
+  font-weight: bold;
+  color: white;
+}
+
+.review-date {
+  opacity: .7;
+  font-size: .8rem;
+}
+
+/* OVERLAY */
+.review-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 500;
+}
+
+.review-overlay-card {
+  background: rgba(0,0,0,.9);
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.25);
+  padding: 20px;
+  width: 600px;
+  max-width: 90%;
+  color: white;
+}
+
+.review-overlay textarea {
+  width: 100%;
+  height: 140px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.3);
+  background: rgba(0,0,0,.65);
+  color: white;
+  padding: 8px;
+}
+
+.review-overlay-controls {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+/* FLOATING ADD/REMOVE BTN */
+.review-action-right {
+  position: absolute;
+  right: 32px;
+  top: 285px;
+}
+
+.review-float-btn {
+  padding: 10px 18px;
+  text-align: center;
+}
