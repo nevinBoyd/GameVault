@@ -11,7 +11,9 @@ def get_reviews(game_id):
 
     if not game:
         return jsonify({"error": "Game not found"}), 404
-
+    
+    user = get_logged_in_user()
+    
     reviews = (
         Review.query
         .filter_by(game_id=game_id)
@@ -25,7 +27,8 @@ def get_reviews(game_id):
             "content": r.content,
             "score": r.score,
             "created_at": r.created_at.isoformat(),
-            "user": r.user.username if r.user else "Unknown"
+            "user": r.user.username if r.user else "Unknown",
+            "is_owner": (user is not None and r.user_id == user.id)
         }
         for r in reviews
     ])

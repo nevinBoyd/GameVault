@@ -12,3 +12,90 @@
 .favorite-remove-btn:hover {
   background: rgba(182, 3, 3, 0.459);
 }
+
+.favorite-header-area {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.favorite-remove-btn-big {
+  background: rgba(255, 80, 80, .15);
+  border: 1px solid rgba(255, 0, 0, .4);
+  padding: 8px 14px;
+  border-radius: 10px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: .2s ease;
+}
+
+.favorite-remove-btn-big:hover {
+  background: rgba(255, 0, 0, .6);
+  border-color: rgba(255, 0, 0, .9);
+}
+
+/* Game Content Shell */
+.favorite-game-shell {
+  background: rgba(255,255,255,.06);
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.25);
+  padding: 18px;
+  margin-top: 14px;
+  box-shadow: 0 0 28px rgba(0,0,0,.7);
+}
+
+/* Main Image Polish */
+.favorite-game-image {
+  width: 75%;
+  max-width: 700px;
+  height: 380px;
+
+  object-fit: cover;
+  border-radius: 14px;
+  box-shadow: 0 18px 38px rgba(0,0,0,.8);
+
+  display: block;
+  margin-left: 0;
+  margin-right: auto;
+  margin-top: 10px;
+  margin-inline: 0; 
+}
+
+/* Reviews section shell */
+.review-block {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(0,0,0,.6);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 12px;
+}
+
+/* Prevent footer collision */
+.add-review-area {
+  padding-bottom: 80px;
+}
+
+/* FAVORITE PAGE IMAGE CONTROL */
+.favorite-details-page .game-details-header {
+  display: flex;
+  justify-content: flex-start;
+}
+
+/* ONLY Favorites Detail Page Image */
+.favorite-details-page .detail-main-image {
+  width: 90%;
+  max-width: 600px;
+  height: 232px;
+  object-fit: cover;
+
+  border-radius: 14px;
+  box-shadow: 0 18px 38px rgba(0,0,0,.8);
+
+  display: block;
+  margin-left: 0;
+  margin-right: auto;
+  margin-top: 10px;
+}
+

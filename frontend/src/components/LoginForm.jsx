@@ -49,7 +49,7 @@ export default function LoginForm() {
           onChange={e => setPassword(e.target.value)}
         />
 
-        <button disabled={loading}>
+        <button type="submit" disabled={loading}>
           {loading ? "Logging in..." : "Login"}
         </button>
       </form>

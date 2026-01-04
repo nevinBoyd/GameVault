@@ -253,7 +253,12 @@ async function openReviews(gameId) {
 
                 <button
                   className="expanded-btn review-btn"
-                  onClick={() => setShowReviewOverlay(true)}
+                  onClick={() => {
+                    setReviewText("");
+                    setRating("");
+                    setShowReviewsOverlay(false);
+                    setShowReviewOverlay(true);
+                  }}
                 >
                   📝 Review
                 </button>
