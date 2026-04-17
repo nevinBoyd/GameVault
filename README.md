@@ -124,15 +124,13 @@ A huge focus existed around preventing UI and data surprises. Everything is desi
 
 ## Reflection
 
-This project ended up being a lesson in maturity more than feature chasing.
+This project emphasized building stable, reliable systems over expanding feature scope.
 
-The backend became an exercise in building something dependable: session-based authentication instead of “flashy token systems,” stored local game data instead of constantly hitting RAWG API, and strict ownership enforcement so nothing feels careless. It forced slower, more deliberate thinking about security, stability, and contract clarity between frontend and backend.
+On the backend, the focus shifted toward predictable behavior and data integrity, including session-based authentication, locally managed data, and strict ownership enforcement. This required more deliberate thinking around security, consistency, and clear contracts between the frontend and backend.
 
-The frontend turned into refinement work instead of just “make it appear on screen.” Getting information to display was the easy part. Making it readable, visually calm, and structurally consistent took real effort. The favorites system and review UX both needed multiple rounds to prevent layout regressions or confusing transitions. Route-aware styling ended up being essential to prevent one feature bleeding into another.
+On the frontend, the challenge moved beyond rendering data to refining usability and structure. Features such as reviews and favorites required multiple iterations to ensure consistent layout, clear transitions, and separation of concerns. Route-aware styling became important to prevent UI conflicts across views.
 
-There were multiple moments where things looked “good enough,” but they really weren’t. Iterating until the UI stopped feeling accidental and started feeling intentional was one of the biggest growth moments in this build.
-
-Overall, GameVault feels stable, cohesive, and real. It is reliable, maintains trust with user data, and presents information in a way that feels deliberate.
+The result is a more stable and cohesive application, with a stronger emphasis on reliability, clarity, and intentional design decisions.
 
 ---
 
